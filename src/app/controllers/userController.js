@@ -162,7 +162,7 @@ exports.signIn = async function(req, res) {
     const connection = await pool.getConnection(async (conn) => conn)
     try {
       const selectUserInfoQuery = `
-                SELECT id,  password 
+                SELECT id, password 
                 FROM User
                 WHERE id = ?;
                 `
@@ -224,6 +224,7 @@ exports.signIn = async function(req, res) {
   }
 }
 
+
 /**
  update : 2019.09.23
  03.check API = token 검증
@@ -235,4 +236,78 @@ exports.check = async function(req, res) {
     message: '검증 성공',
     info: req.verifiedToken,
   })
+}
+
+
+/* 03. 회원정보 보기 */
+exports.userInfo = async function (req, res) {
+  const token = req.verifiedToken
+  console.log(token)
+  try {
+    const connection = await pool.getConnection(async (conn) => conn)
+    try {
+      const selectUserInfoQuery = `
+                    SELECT id, profileImage, nickname, gender, name, birth
+                    FROM User
+                    WHERE id = ?;
+                    `
+      console.log(token.name)
+      const selectUserInfoParams = token.id
+      const [userInfoRows] = await connection.query(selectUserInfoQuery, selectUserInfoParams)
+      connection.release()
+      res.json({
+        userInfo: userInfoRows,
+        isSuccess: true,
+        code: 200,
+        message: '정보조회 성공',
+      })
+    } catch (err) {
+      logger.error(`App - userInfo Query error\n: ${JSON.stringify(err)}`)
+      console.log(err)
+      connection.release()
+      return false
+    }
+  } catch (err) {
+    logger.error(`App - userInfo DB Connection error\n: ${JSON.stringify(err)}`)
+    return false
+  }
+}
+
+
+// 04.modifyUser 내 정보수정
+
+exports.modifyUser = async function(req, res) {
+  const token = req.verifiedToken
+  const data = req.body
+  console.log(token)
+  try {
+    const connection = await pool.getConnection(async (conn) => conn)
+    try {
+      const selectUserInfoQuery = `UPDATE User 
+            SET name=?, nickname=?, profileImage=? WHERE id=?;
+            `
+      console.log(token.id)
+      const selectUserInfoParams = token.id
+      const [ userInfoRows ] = await connection.query(selectUserInfoQuery, [
+        data.name,
+        data.nickname,
+        data.profileImage,
+        selectUserInfoParams,
+      ])
+      connection.release()
+      res.json({
+        isSuccess: true,
+        code: 200,
+        message: '정보수정 성공',
+      })
+    } catch (err) {
+      logger.error(`App - modifyUser Query error\n: ${JSON.stringify(err)}`)
+      console.log(err)
+      connection.release()
+      return false
+    }
+  } catch (err) {
+    logger.error(`App - modifyUser DB Connection error\n: ${JSON.stringify(err)}`)
+    return false
+  }
 }
