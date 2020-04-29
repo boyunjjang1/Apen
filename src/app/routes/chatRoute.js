@@ -9,8 +9,9 @@ module.exports = function (app) {
     const roomForDraw = io.of('/testDraw');
     let room =['room1','room2'];
 
-    app.get('/chatRoom', function(req,res){
+    app.get('/chatRoom', jwtMiddleware, function(req,res){
       console.log("chat room")
+
       room.emit('test', {
         'Hello': 'World',
         'test': 'good'
@@ -22,45 +23,69 @@ module.exports = function (app) {
           console.log('Connected at 3060');
      });
    
-    roomForChat.on('connection', (clientSocket) => {
-      console.log('*** test connected ***');
-      console.log(clientSocket.id)
-  
-      clientSocket.on('disconnect', function () {
-        clientSocket.disconnect();
-        console.log('test disconnected');
-      })
+     roomForChat.on('connection', (clientSocket) => {
+       console.log("socket connection");
+       let roomName = null;
 
-      clientSocket.on('leaveRoom', (num, name) => {
-        clientSocket.leave(room[num-1], () => {
-          console.log(name + ' leave a ' + room[num-1]);
-          clientSocket.to(room[num-1]).emit('leaveRoom', num, name);
-        });
-      });
+       console.log('Client Socket', clientSocket.id);
+       
+       clientSocket.on('joinRoom', (data) => {
+         console.log(data);
+         roomName = data;
+         clientSocket.join(data);
+       });
+
+       clientSocket.on('sendMsgFromClient', (msg) => {
+        clientSocket.to(roomName).emit('sendMsgFromServer', msg)
+       });
+
+       clientSocket.leave('leaveRoom', (data) => {
+         console.log("Leave Room");
+         clientSocket.to(roomName).emit('leaveRoom');
+       })
+
+     })
+
+
+    // roomForChat.on('connection', (clientSocket) => {
+    //   console.log('*** test connected ***');
+    //   console.log(clientSocket.id)
+  
+    //   clientSocket.on('disconnect', function () {
+    //     clientSocket.disconnect();
+    //     console.log('test disconnected');
+    //   })
+
+    //   clientSocket.on('leaveRoom', (num, name) => {
+    //     clientSocket.leave(room[num-1], () => {
+    //       console.log(name + ' leave a ' + room[num-1]);
+    //       clientSocket.to(room[num-1]).emit('leaveRoom', num, name);
+    //     });
+    //   });
     
     
-     clientSocket.on('joinRoom', (num, name) => {
-       console.log("joinROom TEst",num);
-        clientSocket.join(room[num-1], () => {
-          console.log(name + ' join a ' + room[num-1]);
-          clientSocket.to(room[num-1]).emit('joinRoom', num, name);
-        });
-      });
+    //  clientSocket.on('joinRoom', (num, name) => {
+    //    console.log("joinROom TEst",num);
+    //     clientSocket.join(room[num-1], () => {
+    //       console.log(name + ' join a ' + room[num-1]);
+    //       clientSocket.to(room[num-1]).emit('joinRoom', num, name);
+    //     });
+    //   });
       
-      clientSocket.on('sendMsgFromClient', (num,name,msg) => {
-        console.log(msg)
-        console.log(msg.msg)
-        console.log('*************')
-        console.log(num)
+    //   clientSocket.on('sendMsgFromClient', (num,name,msg) => {
+    //     console.log(msg)
+    //     console.log(msg.msg)
+    //     console.log('*************')
+    //     console.log(num)
 
-        a = num-1;
-        clientSocket.to(room[a]).emit('sendMsgFromServer', msg);
-        console.log(a, name);
+    //     a = num-1;
+    //     clientSocket.to(room[a]).emit('sendMsgFromServer', msg);
+    //     console.log(a, name);
   
-        // clientSocket.broadcast.emit('sendMsgFromServer',  msg )
-      })
+    //     // clientSocket.broadcast.emit('sendMsgFromServer',  msg )
+    //   })
     
-    })
+    // })
   
     roomForDraw.on('connection', (clientSocket) => {
       console.log('*** test connected ***');

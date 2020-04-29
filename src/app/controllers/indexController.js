@@ -17,14 +17,15 @@ exports.default = async function (req, res) {
 
 exports.searchController = async function (req, res) {
     console.log("searchController In")
-    const json = req.body
+    const par = req.query
     const token = req.verifiedToken
+    console.log(par)
     const connection = await pool.getConnection(async (conn) => conn)
     try {
       const SearchQuery = `SELECT nickname,name FROM User
           WHERE
-              name LIKE '%${json.word}%' OR
-              nickname LIKE '%${json.word}%';`
+              name LIKE '%${par.word}%' OR
+              nickname LIKE '%${par.word}%';`
       const [rows] = await connection.query(SearchQuery)
       console.log(rows)
       const list = []
