@@ -135,6 +135,7 @@ exports.signUp = async function(req, res) {
   }
 }
 
+// 로그인
 exports.signIn = async function(req, res) {
   const { id, password } = req.body
 
@@ -162,7 +163,7 @@ exports.signIn = async function(req, res) {
     const connection = await pool.getConnection(async (conn) => conn)
     try {
       const selectUserInfoQuery = `
-                SELECT id, password 
+                SELECT id, password, status 
                 FROM User
                 WHERE id = ?;
                 `
@@ -187,6 +188,22 @@ exports.signIn = async function(req, res) {
           isSuccess: false,
           code: 312,
           message: '비밀번호를 확인해주세요.',
+        })
+      }
+
+      if (userInfoRows[0].status === 'INACTIVE') {
+        connection.release()
+        return res.json({
+          isSuccess: false,
+          code: 312,
+          message: '비활성화 된 계정입니다. 고객센터에 문의해주세요.',
+        })
+      } else if (userInfoRows[0].status === 'DELETED') {
+        connection.release()
+        return res.json({
+          isSuccess: false,
+          code: 313,
+          message: '탈퇴 된 계정입니다. 고객센터에 문의해주세요.',
         })
       }
 
