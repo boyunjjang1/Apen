@@ -50,14 +50,9 @@ const {
 
     console.log(token.id)
     
-    if(token.id != 'boyunjjang@naver.com'){
-        return res.json({
-            isSuccess: false,
-            code: 315,
-            message: '관리자가 아닙니다'
-        }) 
-    }
-    const connection = await pool.getConnection(async (conn) => conn)
+    
+    if(token.id == 'boyunjjang@naver.com'){
+      const connection = await pool.getConnection(async (conn) => conn)
   
     try {
       const CategoryAddQuery = `INSERT INTO Category (categoryName) VALUES (?);`
@@ -76,6 +71,13 @@ const {
         code: 316,
         message: '카테고리 추가 실패',
       })
+    }
+    } else {
+      return res.json({
+        isSuccess: false,
+        code: 315,
+        message: '관리자가 아닙니다'
+    }) 
     }
 
   }
