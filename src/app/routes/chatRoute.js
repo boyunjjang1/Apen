@@ -4,12 +4,13 @@ module.exports = function (app) {
   const jwtMiddleware = require('../../../config/jwtMiddleware');
   const http = require('http').createServer(app);
   const io = require('socket.io')(http);
+  const { v4: uuidv4 } = require('uuid');
 
   const roomForChat = io.of('/testChat');
   const roomForDraw = io.of('/testDraw');
   const room = io.of('/room');
 
-  // let room =['room1','room2'];
+  const loginIds = new Array();
 
   app.get('/chatRoom', jwtMiddleware, function(req,res){
     console.log("chat room")
@@ -20,6 +21,9 @@ module.exports = function (app) {
         console.log('Connected at 3060');
    });
 
+  
+    
+
    room.on('connection', (clientSocket) => {
      let roomName = null;
      console.log("room 네임스페이스에 접속");
@@ -28,30 +32,40 @@ module.exports = function (app) {
       clientSocket.on('createRoom', (data) => {
         // createRoom 성공하면 
         let msg = {code: 100}
-        clientSocket.emit('RoomLog', code)
-        roomName = "room"+clientSocket.id;
+        clientSocket.emit('RoomLog', msg)
+        roomName = uuidv4();
+        console.log(roomName, "roomNameCheck");
+        clientSocket.emit('RoomID',roomName);
         clientSocket.join(roomName);
+
+        // loginIds.push({
+        //   socket: socket.id,
+        //   room: roomName
+        // })
       })
 
      clientSocket.on('joinRoom', (data) => {
       console.log(data);
       roomName = data.roomName;
       let msg = {msg: '상대방이 입장하셨습니다.'}
-      // clientSocket.in(roomName).emit('RoomLog', msg);
-      clientSocket.emit('RoomLog','방 참가');
+      clientSocket.in(roomName).emit('RoomLog', msg);
+      // clientSocket.emit('RoomLog','방 참가');
+
+      console.log(clientSocket.adapter.rooms, "몇명 체크");
 
       clientSocket.join(roomName);
     });
 
-    clientSocket.on('sendMsgFromClient', (msg) => {
-     clientSocket.to(roomName).emit('sendMsgFromServer', msg)
+    clientSocket.on('sendMsgFromClient', (room, msg) => {
+      console.log(room, "메시지 방이름 ")
+     clientSocket.to(room).emit('sendMsgFromServer', msg)
     });
 
 
     clientSocket.leave('leaveRoom', (data) => {
       console.log("Room네임스페이스 Leave Room");
       let msg = {code: 103}
-      clientSocket.emit('RoomLog',code);
+      clientSocket.emit('RoomLog',msg);
       clientSocket.to(roomName).emit('leaveRoom');
     })
 
