@@ -4,10 +4,9 @@ module.exports = function (app) {
   const http = require('http').createServer(app);
   const io = require('socket.io')(http);
   const { v4: uuidv4 } = require('uuid');
-
   const room = io.of('/room');
+  // const loginIds = new Array();
 
-  const loginIds = new Array();
 
   app.get('/chatRoom', jwtMiddleware, function(req,res){
     console.log("chat room")
@@ -23,7 +22,6 @@ module.exports = function (app) {
      console.log("room 네임스페이스에 접속");
      console.log('Client Socket', clientSocket.id);
 
-
       clientSocket.on('createRoom', (data) => {
         // createRoom 성공하면 
         let msg = {code: 100}
@@ -34,13 +32,15 @@ module.exports = function (app) {
         clientSocket.join(roomName);
 
         // loginIds.push({
-        //   socket: socket.id,
-        //   room: roomName
+        //   owner: clientSocket.id,
+        //   roomTitle: roomName,
+        //   status: "ACTIVE"
         // })
       })
 
      clientSocket.on('joinRoom', (data) => {
-      console.log(data);
+
+      console.log(data, "joinRoomTest");
       roomName = data;
       let msg = {code: 102}
       // clientSocket.in(roomName).emit('RoomLog', msg); // 나한테는 안보이게 하기
@@ -48,7 +48,7 @@ module.exports = function (app) {
 
       clientSocket.broadcast.to(roomName).emit('RoomLog',msg);
       let msg2 = {code: 101}
-      clientSocket(clientSocket).emit('RoomLog',msg2);
+      clientSocket.to(clientSocket.id).emit('RoomLog',msg2);
 
       // console.log(clientSocket.adapter.rooms, "몇명 체크");
 
@@ -60,15 +60,13 @@ module.exports = function (app) {
      clientSocket.to(roomName).emit('sendMsgFromServer', msg)
     });
 
+     // disconnect --> 소켓 연결 끊겼을 때
 
     clientSocket.leave(roomName, (data) => {
       console.log("Room네임스페이스 Leave Room");
       let msg = {code: 103}
       // clientSocket.emit('RoomLog',msg);
-      clientSocket.broadcast.to(roomName).emit('leaveRoom',msg);
-      
+      clientSocket.broadcast.to(roomName).emit('leaveRoom',msg);      
     })
-
    })
- 
 }
