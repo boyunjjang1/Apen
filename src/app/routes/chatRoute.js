@@ -48,7 +48,7 @@ module.exports = function (app) {
 
       clientSocket.broadcast.to(roomName).emit('RoomLog',msg);
       let msg2 = {code: 101}
-      clientSocket.to(clientSocket.id).emit('RoomLog',msg2);
+      clientSocket.emit('RoomLog',msg2);
 
       // console.log(clientSocket.adapter.rooms, "몇명 체크");
 
