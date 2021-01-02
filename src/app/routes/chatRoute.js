@@ -5,8 +5,6 @@ module.exports = function (app) {
   const io = require('socket.io')(http);
   const { v4: uuidv4 } = require('uuid');
   const room = io.of('/room');
-  // const loginIds = new Array();
-
 
   app.get('/chatRoom', jwtMiddleware, function(req,res){
     console.log("chat room")
@@ -62,11 +60,18 @@ module.exports = function (app) {
 
      // disconnect --> 소켓 연결 끊겼을 때
 
-    clientSocket.leave(roomName, (data) => {
-      console.log("Room네임스페이스 Leave Room");
-      let msg = {code: 103}
-      // clientSocket.emit('RoomLog',msg);
-      clientSocket.broadcast.to(roomName).emit('leaveRoom',msg);      
+    clientSocket.on('leaveRoom', (room) => {
+
+      clientSocket.leave(room, (data) => {
+        console.log("Room네임스페이스 Leave Room");
+        let msg = {code: 103}
+        // clientSocket.emit('RoomLog',msg);
+        clientSocket.broadcast.to(room).emit('leaveRoom',msg);      
+      })
+     })
     })
-   })
+
+    
+
+
 }
